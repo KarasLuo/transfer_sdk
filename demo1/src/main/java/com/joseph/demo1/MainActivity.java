@@ -1,4 +1,4 @@
-package com.joseph.transfer_sdk;
+package com.joseph.demo1;
 
 import androidx.appcompat.app.AppCompatActivity;
 

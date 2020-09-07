@@ -1,4 +1,4 @@
-package com.joseph.demo2;
+package com.joseph.demo;
 
 import com.joseph.transfer_sdk.ble.IBleDevice;
 

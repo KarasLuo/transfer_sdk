@@ -1,4 +1,4 @@
-package com.joseph.demo2;
+package com.joseph.demo;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;

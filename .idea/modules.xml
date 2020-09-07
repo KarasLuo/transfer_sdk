@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/app.iml" group="transfer_sdk/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/demo2/demo.iml" filepath="$PROJECT_DIR$/.idea/modules/demo2/demo.iml" group="transfer_sdk/demo" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/demo1/demo1.iml" filepath="$PROJECT_DIR$/.idea/modules/demo1/demo1.iml" group="transfer_sdk/demo1" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/demo2/demo2.iml" filepath="$PROJECT_DIR$/.idea/modules/demo2/demo2.iml" group="transfer_sdk/demo2" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/transfer_sdk.iml" filepath="$PROJECT_DIR$/.idea/modules/transfer_sdk.iml" group="transfer_sdk" />
     </modules>
   </component>

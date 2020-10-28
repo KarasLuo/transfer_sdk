@@ -20,14 +20,12 @@ import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.joseph.transfer_sdk.ByteUtils;
 import com.joseph.transfer_sdk.exception.FeatureNotSupportException;
 import com.joseph.transfer_sdk.exception.PermissionNotSupportException;
-import com.joseph.transfer_sdk.rxbus.BusConstant;
 import com.joseph.transfer_sdk.rxbus.BusEvent;
 import com.joseph.transfer_sdk.rxbus.RxBus;
 
@@ -51,6 +49,7 @@ import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_DISCONNECTED;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SCAN_CALLBACK_ERROR;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SCAN_CALLBACK_LIST;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SCAN_CALLBACK_SINGLE;
+import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SERVICE_INFO;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_TRANSFER;
 
 /**
@@ -59,8 +58,9 @@ import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_TRANSFER;
 @SuppressLint("MissingPermission")
 public class BleClient {
     private static final String TAG="BleClient";
-    private Context context;
-    private static BleClient instance;
+    private static class ClientHolder{
+        private static final BleClient INSTANCE=new BleClient();
+    }
 
     public static final int BLUETOOTH_REQUEST_CODE=1130;//蓝牙请求码，便于处理反馈
 
@@ -74,6 +74,7 @@ public class BleClient {
     private BluetoothGattCharacteristic bgcRead;
     private BluetoothGattCharacteristic bgcNotify;
 
+    private BleServiceCallback serviceCallback;
     private BleSearchCallback searchCallback;
     private BleConnectCallback connectCallback;
     private List<BluetoothDevice> searchedBleList =new ArrayList<>();//保存蓝牙设备实例列表
@@ -84,27 +85,19 @@ public class BleClient {
     private Disposable transferTimeoutDisposable;
     private Disposable rxbusDisposable;
 
-    private BleClient(@NonNull Context context)throws FeatureNotSupportException{
-        this.context=context.getApplicationContext();
-        checkBleSupport();
-        //接收bleClient的事件
-        receiveRxbus();
+    private BleGattNotifyCallback notifyCallback;
+
+    private BleClient(){
     }
 
     /**
      * 获取单例 如果没有实例就创建
-     * @param context
      * @return
      */
-    public static BleClient getInstance(@NonNull Context context) throws FeatureNotSupportException{
-        if(instance==null){
-            synchronized (BleClient.class){
-                if(instance==null){
-                    instance=new BleClient(context);
-                }
-            }
-        }
-        return instance;
+    public static final BleClient getInstance() {
+        BleClient client=ClientHolder.INSTANCE;
+        Log.w(TAG,"蓝牙实例:"+client);
+        return client;
     }
 
     /**
@@ -124,8 +117,18 @@ public class BleClient {
             transferTimeoutDisposable=null;
         }
         disconnectBluetooth();
-        instance=null;
         System.gc();
+    }
+
+    /**
+     * 初始化
+     * @param context
+     * @throws FeatureNotSupportException
+     */
+    public void init(Context context)throws FeatureNotSupportException{
+        checkBleSupport(context);
+        //接收bleClient的事件
+        receiveRxbus();
     }
 
     /**
@@ -183,9 +186,19 @@ public class BleClient {
                                     connectCallback.onDisconnected(disconnected);
                                 }
                                 break;
+                            case BLE_EVENT_SERVICE_INFO:
+                                List<BluetoothGattService>serviceList=
+                                        (List<BluetoothGattService>) busEvent.getMsg();
+                                if(serviceCallback!=null&&serviceList!=null){
+                                    serviceCallback.onList(serviceList);
+                                }
+                                break;
                                 /**蓝牙传输**/
                             case BLE_EVENT_TRANSFER:
                                 byte[]readBytes=(byte[])busEvent.getMsg();
+                                if(notifyCallback!=null){
+                                    notifyCallback.onNotify(readBytes);
+                                }
                                 if(transferWorking!=null){
                                     transferWorking.callback.onReply(readBytes);
                                     transferWorking=null;
@@ -201,7 +214,7 @@ public class BleClient {
 
     /**
      * 设置GATT服务的UUID
-     * 初次实例化后设置
+     * 连接蓝牙前使用
      * @param uuidService
      * @return
      */
@@ -212,7 +225,7 @@ public class BleClient {
 
     /**
      * 设置服务下的可用特征
-     * 初次实例化后设置
+     * 连接蓝牙前使用
      * @param uuidRead
      * @param uuidWrite
      * @param uuidNotify
@@ -244,10 +257,24 @@ public class BleClient {
     }
 
     /**
+     * 设置蓝牙服务的回调
+     * @param serviceCallback
+     */
+    public BleClient setServiceCallback(BleServiceCallback serviceCallback) {
+        this.serviceCallback = serviceCallback;
+        return this;
+    }
+
+    public BleClient setNotifyCallback(BleGattNotifyCallback notifyCallback) {
+        this.notifyCallback = notifyCallback;
+        return this;
+    }
+
+    /**
      * 检查是否支持低功耗蓝牙功能
      * @throws FeatureNotSupportException
      */
-    private void checkBleSupport() throws FeatureNotSupportException {
+    private void checkBleSupport(Context context) throws FeatureNotSupportException {
         boolean hasBle=context.getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
         if(!hasBle){
@@ -274,7 +301,7 @@ public class BleClient {
             throws PermissionNotSupportException {
         searchedBleList.clear();
         String blPermission="android.permission.BLUETOOTH";
-        int value=context.checkCallingOrSelfPermission(blPermission);
+        int value=activity.getApplicationContext().checkCallingOrSelfPermission(blPermission);
         Log.e(TAG,"permission value="+value);
         if(value!=PackageManager.PERMISSION_GRANTED){
             throw new PermissionNotSupportException("app required permission:"+blPermission);
@@ -299,8 +326,7 @@ public class BleClient {
                 .setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
         //开始扫描
         try{
-            bleAdapter.getBluetoothLeScanner()
-                    .startScan(filters, scanSettings, scanCallback);
+            bleAdapter.getBluetoothLeScanner().startScan(filters, scanSettings, scanCallback);
             Log.i(TAG,"start scan ble");
         }catch (Exception e){
             Log.e(TAG,"start ble scan:"+e.getMessage());
@@ -312,8 +338,7 @@ public class BleClient {
      */
     public void stopSearchBluetooth(){
         try{
-            bleAdapter.getBluetoothLeScanner()
-                    .stopScan(scanCallback);
+            bleAdapter.getBluetoothLeScanner().stopScan(scanCallback);
             Log.i(TAG,"stop scan ble");
         }catch (Exception e){
             Log.e(TAG,"stop ble scan:"+e.getMessage());
@@ -361,7 +386,7 @@ public class BleClient {
      * @param device
      * @param timeout s
      */
-    public void connectBluetooth(BluetoothDevice device,int timeout){
+    public void connectBluetooth(final Context context, BluetoothDevice device, int timeout){
         if(connectTimeoutDisposable!=null){
             connectTimeoutDisposable.dispose();
             connectTimeoutDisposable=null;
@@ -404,10 +429,26 @@ public class BleClient {
      */
     public void disconnectBluetooth(){
         Log.i(TAG,"^^^^^disconnectBluetooth^^^^^^^^^");
+        resetCharacteristic();
+        transferQueue.clear();
+        transferWorking=null;
         if (bleGatt!=null){
             bleGatt.disconnect();
             bleGatt=null;
         }
+    }
+
+    /**
+     * 重设使用的特征
+     */
+    public void resetCharacteristic(){
+        uuidService=null;
+        uuidNotify=null;
+        uuidRead=null;
+        uuidWrite=null;
+        bgcNotify=null;
+        bgcRead=null;
+        bgcWrite=null;
     }
 
     /**
@@ -429,6 +470,57 @@ public class BleClient {
             d.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             boolean isWrite=bleGatt.writeDescriptor(d);
             Log.i(TAG,"descriptor isWrite="+isWrite);
+        }
+    }
+
+    /**
+     * 获取characteristic实例（同一service下）
+     * @param serviceUUID
+     * @param notifyUUID
+     * @param readUUID
+     * @param writeUUID
+     * @throws Exception
+     */
+    public void setCharacteristic(String serviceUUID, String notifyUUID,String readUUID,String writeUUID) throws Exception{
+        if(bleGatt==null){
+            throw new NullPointerException("BluetoothGattService is null! Connect Ble first!");
+        }
+        List<String>notFoundChars=new ArrayList<>();
+        if(serviceUUID!=null){
+            //获取service
+            BluetoothGattService service=bleGatt.getService(UUID.fromString(serviceUUID));
+            if(service==null){
+                throw new Exception("bluetooth service("+serviceUUID+") not found!");
+            }
+            //获取characteristic
+            if(notifyUUID!=null){
+                bgcNotify=service.getCharacteristic(UUID.fromString(notifyUUID));
+                setNotifyEnable(bgcNotify);
+                if(bgcNotify==null){
+                    notFoundChars.add(notifyUUID);
+                }else {
+                    //找到就开启notify监听
+                    bleGatt.setCharacteristicNotification(bgcNotify, true);
+                }
+            }
+            if(readUUID!=null){
+                bgcRead=service.getCharacteristic(UUID.fromString(readUUID));
+                if(bgcRead==null){
+                    notFoundChars.add(readUUID);
+                }
+            }
+            if(writeUUID!=null){
+                bgcWrite=service.getCharacteristic(UUID.fromString(writeUUID));
+                if(bgcWrite==null){
+                    notFoundChars.add(writeUUID);
+                }
+            }
+        }
+        //检查
+        if(notFoundChars.size()>0){
+            Log.e(TAG,"获取characteristic不全："+notFoundChars.size());
+            throw new Exception("bluetooth characteristic not found:"
+                    + Arrays.toString(notFoundChars.toArray()));
         }
     }
 
@@ -463,49 +555,21 @@ public class BleClient {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int s) {
-            //获取service
-            BluetoothGattService service=gatt.getService(UUID.fromString(uuidService));
-            if(service==null){
-                RxBus.getInstance().post(new BusEvent<>(
-                        BLE_EVENT_CONNECT_ERROR,
-                        new Exception("bluetooth service("+uuidService+") not found!")));
+            try {
+                setCharacteristic(uuidService,uuidNotify,uuidRead,uuidWrite);
+            } catch (Exception e) {
+                e.printStackTrace();
+                RxBus.getInstance().post(new BusEvent<>(BLE_EVENT_CONNECT_ERROR,e));
                 disconnectBluetooth();
                 return;
             }
-            //获取characteristic
-            List<String>notFoundChars=new ArrayList<>();
-            if(uuidNotify!=null){
-                bgcNotify=service.getCharacteristic(UUID.fromString(uuidNotify));
-                setNotifyEnable(bgcNotify);
-                if(bgcNotify==null){
-                    notFoundChars.add(uuidNotify);
-                }
-            }
-            if(uuidRead!=null){
-                bgcRead=service.getCharacteristic(UUID.fromString(uuidRead));
-                if(bgcRead==null){
-                    notFoundChars.add(uuidRead);
-                }
-            }
-            if(uuidWrite!=null){
-                bgcWrite=service.getCharacteristic(UUID.fromString(uuidWrite));
-                if(bgcWrite==null){
-                    notFoundChars.add(uuidWrite);
-                }
-            }
-            //检查
-            if(notFoundChars.size()>0){
-                Log.e(TAG,"获取characteristic不全："+notFoundChars.size());
-                RxBus.getInstance().post(new BusEvent<>(
-                        BLE_EVENT_CONNECT_ERROR,
-                        new Exception("bluetooth characteristic not found:"
-                                + Arrays.toString(notFoundChars.toArray()))));
-            }else {
-                RxBus.getInstance().post(new BusEvent<>(
-                        BLE_EVENT_CONNECTED,
-                        gatt.getDevice()));
-                Log.w(TAG,"连接完成："+gatt.getDevice().getName());
-            }
+            RxBus.getInstance().post(new BusEvent<>(
+                    BLE_EVENT_CONNECTED,
+                    gatt.getDevice()));
+            RxBus.getInstance().post(new BusEvent<>(
+                    BLE_EVENT_SERVICE_INFO,
+                    gatt.getServices()));
+            Log.w(TAG,"连接完成："+gatt.getDevice().getName());
         }
 
         @Override
@@ -549,19 +613,16 @@ public class BleClient {
         if(bgcWrite==null){
             throw new NullPointerException("the BluetoothGattCharacteristic for write is null!");
         }
-        if(bgcNotify!=null){
-            bleGatt.setCharacteristicNotification(bgcNotify, true);
-        }
         //开始写数据
         bgcWrite.setValue(value);
         bleGatt.writeCharacteristic(bgcWrite);
     }
 
     /**
-     * 检查notify特征是否为空
+     * 设置监听notify
      * @throws Exception
      */
-    private void checkNotifyCharacteristic()throws Exception{
+    private void notifyCharacteristic()throws Exception{
         if(bgcNotify==null){
             throw new NullPointerException("the BluetoothGattCharacteristic for notify is null!");
         }
@@ -642,7 +703,7 @@ public class BleClient {
                     readCharacteristic();
                     break;
                 case BleTransfer.TASK_TRANSFER_NOTIFY:
-                    checkNotifyCharacteristic();
+                    notifyCharacteristic();
                     break;
                 default:
                     break;

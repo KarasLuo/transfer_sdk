@@ -6,9 +6,9 @@ public class BleTransfer {
     public final static int TASK_TRANSFER_NOTIFY=3;
 
     public long timestamp;
-    public int transferType;
+    public int transferType;//对于notify，需接管所有notify返回的内容
     public byte[]buffer;
-    public int timeout;
+    public int timeout;//大于0有超时检测
     public BleTransferCallback callback;
 
     /**

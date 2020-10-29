@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
@@ -179,6 +180,7 @@ public class BleListFragment extends BaseFragment {
             }
             holder.mRssi.setText(rssi+" dBm");
             holder.mName.setText(name==null?"unknown":name);
+            holder.mName.setTextColor(name==null?Color.RED: Color.BLUE);
             holder.mAddress.setText(address);
             holder.mBtnConnect.setOnClickListener(new View.OnClickListener() {
                 @Override

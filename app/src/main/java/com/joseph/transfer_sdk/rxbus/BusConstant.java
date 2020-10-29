@@ -15,5 +15,6 @@ public final class BusConstant {
     public final static int BLE_EVENT_SERVICE_INFO=224;//蓝牙gatt信息，包括service、characteristic
 
     public final static int BLE_EVENT_TRANSFER=250;
+    public final static int BLE_EVENT_TRANSFER_NOTIFY=251;
 
 }

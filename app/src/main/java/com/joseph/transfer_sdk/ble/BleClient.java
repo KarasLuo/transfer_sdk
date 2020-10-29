@@ -51,6 +51,7 @@ import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SCAN_CALLBACK_
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SCAN_CALLBACK_SINGLE;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_SERVICE_INFO;
 import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_TRANSFER;
+import static com.joseph.transfer_sdk.rxbus.BusConstant.BLE_EVENT_TRANSFER_NOTIFY;
 
 /**
  * 蓝牙功能基本实现
@@ -195,14 +196,17 @@ public class BleClient {
                                 break;
                                 /**蓝牙传输**/
                             case BLE_EVENT_TRANSFER:
-                                byte[]readBytes=(byte[])busEvent.getMsg();
-                                if(notifyCallback!=null){
-                                    notifyCallback.onNotify(readBytes);
-                                }
+                                byte[]transferBytes=(byte[])busEvent.getMsg();
                                 if(transferWorking!=null){
-                                    transferWorking.callback.onReply(readBytes);
+                                    transferWorking.callback.onReply(transferBytes);
                                     transferWorking=null;
                                     doTransfer();
+                                }
+                                break;
+                            case BLE_EVENT_TRANSFER_NOTIFY:
+                                byte[]notifyBytes=(byte[])busEvent.getMsg();
+                                if(notifyCallback!=null){
+                                    notifyCallback.onNotify(notifyBytes);
                                 }
                                 break;
                             default:
@@ -265,6 +269,11 @@ public class BleClient {
         return this;
     }
 
+    /**
+     * 通过回调方式返回的notify数据
+     * @param notifyCallback
+     * @return
+     */
     public BleClient setNotifyCallback(BleGattNotifyCallback notifyCallback) {
         this.notifyCallback = notifyCallback;
         return this;
@@ -597,7 +606,10 @@ public class BleClient {
                                             BluetoothGattCharacteristic characteristic) {
             byte[]bytes=characteristic.getValue();
             Log.e(TAG,"onCharacteristicChanged:"+ ByteUtils.bytesToString(bytes));
-            RxBus.getInstance().post(new BusEvent<>(BLE_EVENT_TRANSFER, bytes));
+            RxBus.getInstance()
+                    .post(new BusEvent<>(BLE_EVENT_TRANSFER, bytes));
+            RxBus.getInstance()
+                    .post(new BusEvent<>(BLE_EVENT_TRANSFER_NOTIFY, bytes));
         }
     };
 
@@ -673,26 +685,10 @@ public class BleClient {
         }
         transferWorking=transferQueue.remove(0);
         transferWorking.timestamp=System.currentTimeMillis();
-        Log.w(TAG,"设置超时时间");
         if(transferTimeoutDisposable !=null){
             transferTimeoutDisposable.dispose();
             transferTimeoutDisposable =null;
         }
-        transferTimeoutDisposable = Observable.just(transferWorking)
-                .delay(transferWorking.timeout, TimeUnit.MILLISECONDS)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<BleTransfer>() {
-                    @Override
-                    public void accept(BleTransfer bleTransfer) throws Exception {
-                        if(bleTransfer.equals(transferWorking)){
-                            Log.w(TAG,"蓝牙传输任务超时");
-                            transferWorking.callback.onTimeout(bleTransfer);
-                            transferWorking=null;
-                            doTransfer();
-                        }
-                    }
-                });
         try{
             Log.w(TAG,"执行任务。。。");
             switch (transferWorking.transferType){
@@ -710,6 +706,27 @@ public class BleClient {
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+        if(transferWorking.timeout>0){
+            Log.w(TAG,"设置超时时间");
+            transferTimeoutDisposable = Observable.just(transferWorking)
+                    .delay(transferWorking.timeout, TimeUnit.MILLISECONDS)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<BleTransfer>() {
+                        @Override
+                        public void accept(BleTransfer bleTransfer) throws Exception {
+                            if(bleTransfer.equals(transferWorking)){
+                                Log.w(TAG,"蓝牙传输任务超时");
+                                transferWorking.callback.onTimeout(bleTransfer);
+                                transferWorking=null;
+                                doTransfer();
+                            }
+                        }
+                    });
+        }else {
+            transferWorking=null;
+            doTransfer();
         }
     }
 }

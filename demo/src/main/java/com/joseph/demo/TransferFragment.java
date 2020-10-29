@@ -3,6 +3,9 @@ package com.joseph.demo;
 import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +19,9 @@ import com.joseph.transfer_sdk.ble.BleGattNotifyCallback;
 import com.joseph.transfer_sdk.ble.BleTransfer;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import static com.joseph.transfer_sdk.ByteUtils.byteToInt;
 import static com.joseph.transfer_sdk.ByteUtils.bytesToString;
 import static com.joseph.transfer_sdk.ByteUtils.stringToBytes;
 
@@ -90,7 +95,28 @@ public class TransferFragment extends BaseFragment {
         tvState=view.findViewById(R.id.tv_state);
         updateState();
         tvConsole=view.findViewById(R.id.tv_console);
+        tvConsole.setMovementMethod(ScrollingMovementMethod.getInstance());
         tvConsole.setText("");
+        tvConsole.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String msg=tvConsole.getText().toString();
+                if(msg.length()>5000){
+                    msg=msg.substring(3000);
+                    tvConsole.setText(msg);
+                }
+            }
+        });
         etInput=view.findViewById(R.id.et_input);
         etInput.setText("");
         btnRead= view.findViewById(R.id.btn_read);
@@ -101,6 +127,7 @@ public class TransferFragment extends BaseFragment {
         btnRead.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                updateConsole("",false);
                 BleClient.getInstance().addTransferTask(new BleTransfer(
                         BleTransfer.TASK_TRANSFER_READ,
                         null,
@@ -116,6 +143,7 @@ public class TransferFragment extends BaseFragment {
         btnWrite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                updateConsole("",false);
                 String input=etInput.getText().toString();
                 byte[]inBytes;
                 try {
@@ -138,18 +166,20 @@ public class TransferFragment extends BaseFragment {
         btnNotify.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: 2020/10/28 弹框选择notify
-                notifyUUID=notifyUUIDs.get(0);
-                updateState();
-
-//                List<BleTransfer>tasks=new ArrayList<>();
-//                tasks.add(new BleTransfer(
-//                        BleTransfer.TASK_TRANSFER_NOTIFY,
-//                        null,
-//                        5000,
-//                        transferCallback
-//                ));
-//                BleClient.getInstance().addTransferTaskList(tasks);
+                // 弹框选择notify
+                NotifyListDialog dialog=new NotifyListDialog(
+                        getHoldingActivity(),
+                        notifyUUIDs,
+                        new NotifyListDialog.DialogCallback() {
+                            @Override
+                            public void onItem(String uuid) {
+                                Log.w(TAG,"choose notify uuid="+uuid);
+                                notifyUUID=uuid;
+                                updateState();
+                            }
+                        }
+                );
+                dialog.show();
             }
         });
         //单独设置notify的回调
@@ -181,8 +211,8 @@ public class TransferFragment extends BaseFragment {
      * 更新状态，重设characteristic
      */
     private void updateState(){
-        String state="service:"+serviceUUID+"\nread characteristic:"+readUUID
-                +"\nwrite characteristic:"+writeUUID+"\nnotify characteristic:"+ notifyUUID;
+        String state="service:"+serviceUUID+"\nread:"+readUUID
+                +"\nwrite:"+writeUUID+"\nnotify:"+ notifyUUID;
         try {
             BleClient.getInstance().setCharacteristic(serviceUUID, notifyUUID,readUUID,writeUUID);
         } catch (Exception e) {
@@ -204,6 +234,11 @@ public class TransferFragment extends BaseFragment {
         }else {
             tvConsole.setText(msg);
         }
+        int offset=tvConsole.getLineCount()*tvConsole.getLineHeight();
+        if(offset>tvConsole.getHeight()){
+            tvConsole.scrollTo(0,offset-tvConsole.getHeight());
+        }
+        tvConsole.invalidate();
     }
 
     /**
@@ -219,6 +254,7 @@ public class TransferFragment extends BaseFragment {
         @Override
         public void onTimeout(BleTransfer task) {
             Log.i(TAG,"传输超时:"+task.transferType);
+            updateConsole("transfer超时:"+task.transferType,true);
         }
     };
 

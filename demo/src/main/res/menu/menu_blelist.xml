@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ToolActivity">
+
+    <item android:id="@+id/search"
+        android:title="刷新"
+        android:icon="@drawable/ic_search"
+        app:showAsAction="ifRoom"/>
+</menu>

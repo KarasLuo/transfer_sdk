@@ -57,7 +57,6 @@ public class ByteUtils {
         return bytes;
     }
 
-
     /**
      * 数据转换
      * @param hbyte 高位数据
@@ -73,7 +72,7 @@ public class ByteUtils {
     }
 
     /**
-     * 数据转换
+     * 数据转换 int 最多4个字节
      * @param hbyte1 高位数据
      * @param hbyte2 高位数据
      * @param lbyte1 低位数据

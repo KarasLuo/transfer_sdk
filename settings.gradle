@@ -1,4 +1,4 @@
-include ':demo2'
-include ':demo1'
+include ':transfertool'
+include ':demo'
 include ':app'
 rootProject.name = "transfer_sdk"

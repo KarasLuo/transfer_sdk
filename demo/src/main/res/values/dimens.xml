@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="padding_edge">30dp</dimen>
+    <dimen name="padding_edge_half">15dp</dimen>
+    <dimen name="text_margin">10dp</dimen>
+    <dimen name="text_margin_half">5dp</dimen>
+</resources>

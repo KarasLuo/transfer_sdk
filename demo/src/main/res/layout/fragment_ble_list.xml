@@ -12,7 +12,7 @@
     android:scrollbars="vertical"
     app:layoutManager="LinearLayoutManager"
     android:background="#ffffff"
-    tools:context=".BleListFragment"
+    tools:context=".bluetooth.BleListFragment"
     tools:listitem="@layout/item_ble" >
 
 </androidx.recyclerview.widget.RecyclerView>

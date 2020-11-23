@@ -1,6 +1,6 @@
 package com.joseph.transfer_sdk.ble;
 
-public class BleTransfer {
+public class BleTask {
     public final static int TASK_TRANSFER_WRITE=1;
     public final static int TASK_TRANSFER_READ=2;
     public final static int TASK_TRANSFER_NOTIFY=3;
@@ -21,7 +21,7 @@ public class BleTransfer {
      * @param timeout 超时时长 毫秒
      * @param callback 读写通知操作的回调 线程不安全
      */
-    public BleTransfer(int transferType, byte[]buffer,int timeout,BleTransferCallback callback){
+    public BleTask(int transferType, byte[]buffer, int timeout, BleTransferCallback callback){
         this.transferType=transferType;
         this.buffer=buffer;
         this.callback=callback;
@@ -30,6 +30,6 @@ public class BleTransfer {
 
     public interface BleTransferCallback {
         void onReply(byte[]bytes);
-        void onTimeout(BleTransfer task);
+        void onTimeout(BleTask task);
     }
 }

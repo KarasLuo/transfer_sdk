@@ -1,4 +1,4 @@
-package com.joseph.demo;
+package com.joseph.demo.bluetooth;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
@@ -20,12 +20,17 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.joseph.demo.BaseFragment;
+import com.joseph.demo.R;
 import com.joseph.transfer_sdk.ble.BleClient;
 import com.joseph.transfer_sdk.ble.BleSearchCallback;
+import com.joseph.transfer_sdk.exception.FeatureNotSupportException;
 import com.joseph.transfer_sdk.exception.PermissionNotSupportException;
+import com.joseph.transfer_sdk.usb.UsbClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -73,7 +78,7 @@ public class BleListFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_blelist, container, false);
+        View view = inflater.inflate(R.layout.fragment_ble_list, container, false);
         Context context;
         context = view.getContext();
         setToolbar();
@@ -84,13 +89,20 @@ public class BleListFragment extends BaseFragment {
         rvAdapter=new RVAdapter(bleList);
         rvBleList.setAdapter(rvAdapter);
 
+        //初始化
+        try {
+            BleClient.getInstance().init(context.getApplicationContext());
+        } catch (FeatureNotSupportException e) {
+            e.printStackTrace();
+            Toast.makeText(getHoldingActivity(),e.getMessage(),Toast.LENGTH_LONG).show();
+        }
         searchDevice();
         return view;
     }
 
     @Override
     public void onDestroyView() {
-        BleClient.getInstance().stopSearchBluetooth();
+        BleClient.getInstance().clear();
         super.onDestroyView();
     }
 
@@ -185,7 +197,7 @@ public class BleListFragment extends BaseFragment {
             holder.mBtnConnect.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    getHoldingActivity().addFragment(GattFragment.newInstance(item.getDevice()));
+                    getHoldingActivity().addFragment(BleGattFragment.newInstance(item.getDevice()));
                 }
             });
         }

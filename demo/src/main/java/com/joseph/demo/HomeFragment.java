@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.joseph.demo.bluetooth.BleListFragment;
+import com.joseph.demo.usb.UsbInfoFragment;
+
 public class HomeFragment extends BaseFragment {
     private static final String TAG="HomeFragment";
 
@@ -30,6 +33,13 @@ public class HomeFragment extends BaseFragment {
             @Override
             public void onClick(View view) {
                 getHoldingActivity().addFragment(new BleListFragment());
+            }
+        });
+        TextView tvUsb=view.findViewById(R.id.feature_usb);
+        tvUsb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getHoldingActivity().addFragment(new UsbInfoFragment());
             }
         });
         return view;

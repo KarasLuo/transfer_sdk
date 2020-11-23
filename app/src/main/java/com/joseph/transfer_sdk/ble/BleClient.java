@@ -81,8 +81,8 @@ public class BleClient {
     private List<BluetoothDevice> searchedBleList =new ArrayList<>();//保存蓝牙设备实例列表
     private Disposable connectTimeoutDisposable;
 
-    private List<BleTransfer>transferQueue=new ArrayList<>();
-    private BleTransfer transferWorking;
+    private List<BleTask>transferQueue=new ArrayList<>();
+    private BleTask transferWorking;
     private Disposable transferTimeoutDisposable;
     private Disposable rxbusDisposable;
 
@@ -101,10 +101,8 @@ public class BleClient {
         return client;
     }
 
-    /**
-     * 销毁单例 回收内存
-     */
-    public void killInstance(){
+    public void clear(){
+        stopSearchBluetooth();
         if(rxbusDisposable!=null){
             rxbusDisposable.dispose();
             rxbusDisposable=null;
@@ -655,7 +653,7 @@ public class BleClient {
      * 添加单个的蓝牙传输任务
      * @param task
      */
-    public void addTransferTask(BleTransfer task){
+    public void addTransferTask(BleTask task){
         transferQueue.add(task);
         doTransfer();
     }
@@ -664,7 +662,7 @@ public class BleClient {
      * 添加一组传输任务
      * @param tasks
      */
-    public void addTransferTaskList(List<BleTransfer> tasks){
+    public void addTransferTaskList(List<BleTask> tasks){
         transferQueue.addAll(tasks);
         doTransfer();
     }
@@ -692,13 +690,13 @@ public class BleClient {
         try{
             Log.w(TAG,"执行任务。。。");
             switch (transferWorking.transferType){
-                case BleTransfer.TASK_TRANSFER_WRITE:
+                case BleTask.TASK_TRANSFER_WRITE:
                     writeCharacteristic(transferWorking.buffer);
                     break;
-                case BleTransfer.TASK_TRANSFER_READ:
+                case BleTask.TASK_TRANSFER_READ:
                     readCharacteristic();
                     break;
-                case BleTransfer.TASK_TRANSFER_NOTIFY:
+                case BleTask.TASK_TRANSFER_NOTIFY:
                     notifyCharacteristic();
                     break;
                 default:
@@ -713,12 +711,12 @@ public class BleClient {
                     .delay(transferWorking.timeout, TimeUnit.MILLISECONDS)
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Consumer<BleTransfer>() {
+                    .subscribe(new Consumer<BleTask>() {
                         @Override
-                        public void accept(BleTransfer bleTransfer) throws Exception {
-                            if(bleTransfer.equals(transferWorking)){
+                        public void accept(BleTask bleTask) throws Exception {
+                            if(bleTask.equals(transferWorking)){
                                 Log.w(TAG,"蓝牙传输任务超时");
-                                transferWorking.callback.onTimeout(bleTransfer);
+                                transferWorking.callback.onTimeout(bleTask);
                                 transferWorking=null;
                                 doTransfer();
                             }

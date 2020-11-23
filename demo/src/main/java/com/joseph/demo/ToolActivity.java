@@ -20,8 +20,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.joseph.transfer_sdk.ble.BleClient;
-import com.joseph.transfer_sdk.exception.FeatureNotSupportException;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.trello.rxlifecycle3.components.support.RxAppCompatActivity;
 
@@ -50,22 +48,9 @@ public class ToolActivity extends RxAppCompatActivity {
             }
         });
 
-        //初始化
         requestPermission();
-        try {
-            BleClient.getInstance().init(this.getApplicationContext());
-        } catch (FeatureNotSupportException e) {
-            e.printStackTrace();
-            Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
-        }
         //初始界面
         addFirstFragment(new HomeFragment());
-    }
-
-    @Override
-    protected void onDestroy() {
-        BleClient.getInstance().killInstance();
-        super.onDestroy();
     }
 
     /**

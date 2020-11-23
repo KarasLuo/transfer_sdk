@@ -12,6 +12,9 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
+        String input="aa 55";
+        System.out.println(input);
+        boolean isMatch=input.matches("([0-9a-fA-F\\s])*");
+        System.out.println(isMatch);
     }
 }

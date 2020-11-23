@@ -1,4 +1,4 @@
-package com.joseph.demo;
+package com.joseph.demo.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -17,6 +17,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.joseph.demo.BaseFragment;
+import com.joseph.demo.MyApplication;
+import com.joseph.demo.R;
 import com.joseph.transfer_sdk.ble.BleClient;
 import com.joseph.transfer_sdk.ble.BleConnectCallback;
 import com.joseph.transfer_sdk.ble.BleServiceCallback;
@@ -24,7 +27,7 @@ import com.joseph.transfer_sdk.ble.BleServiceCallback;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GattFragment extends BaseFragment {
+public class BleGattFragment extends BaseFragment {
     private static final String TAG="GattFragment";
 
     private static final String FRAGMENT_PARAM1 = "BleDevice";
@@ -50,12 +53,12 @@ public class GattFragment extends BaseFragment {
         }
     }
 
-    private GattFragment() {
+    private BleGattFragment() {
 
     }
 
-    public static GattFragment newInstance(BluetoothDevice ble) {
-        GattFragment fragment = new GattFragment();
+    public static BleGattFragment newInstance(BluetoothDevice ble) {
+        BleGattFragment fragment = new BleGattFragment();
         Bundle args = new Bundle();
         args.putParcelable(FRAGMENT_PARAM1, ble);
         fragment.setArguments(args);
@@ -74,7 +77,7 @@ public class GattFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v= inflater.inflate(R.layout.fragment_gatt, container, false);
+        View v= inflater.inflate(R.layout.fragment_ble_gatt, container, false);
         setToolbar();
         progressBar=v.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
@@ -242,7 +245,7 @@ public class GattFragment extends BaseFragment {
                 holder.tvTransfer.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        getHoldingActivity().addFragment(TransferFragment.newInstance(
+                        getHoldingActivity().addFragment(BleTransferFragment.newInstance(
                                 bleDevice,
                                 transferService,
                                 transferRead,

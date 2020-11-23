@@ -1,4 +1,4 @@
-package com.joseph.demo;
+package com.joseph.demo.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
@@ -14,9 +14,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.joseph.demo.BaseFragment;
+import com.joseph.demo.R;
 import com.joseph.transfer_sdk.ble.BleClient;
 import com.joseph.transfer_sdk.ble.BleGattNotifyCallback;
-import com.joseph.transfer_sdk.ble.BleTransfer;
+import com.joseph.transfer_sdk.ble.BleTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ import static com.joseph.transfer_sdk.ByteUtils.byteToInt;
 import static com.joseph.transfer_sdk.ByteUtils.bytesToString;
 import static com.joseph.transfer_sdk.ByteUtils.stringToBytes;
 
-public class TransferFragment extends BaseFragment {
+public class BleTransferFragment extends BaseFragment {
     private static final String TAG="TransferFragment";
 
     private static final String PARAM_BLE_DEVICE = "BleDevice";
@@ -48,16 +50,16 @@ public class TransferFragment extends BaseFragment {
     private TextView btnWrite;
     private TextView btnNotify;
 
-    public TransferFragment() {
+    public BleTransferFragment() {
 
     }
 
-    public static TransferFragment newInstance(BluetoothDevice bleDevice,
-                                               String serviceUUID,
-                                               String readUUID,
-                                               String writeUUID,
-                                               ArrayList<String> notifyUUID) {
-        TransferFragment fragment = new TransferFragment();
+    public static BleTransferFragment newInstance(BluetoothDevice bleDevice,
+                                                  String serviceUUID,
+                                                  String readUUID,
+                                                  String writeUUID,
+                                                  ArrayList<String> notifyUUID) {
+        BleTransferFragment fragment = new BleTransferFragment();
         Bundle args = new Bundle();
         args.putParcelable(PARAM_BLE_DEVICE, bleDevice);
         args.putString(PARAM_SERVICE, serviceUUID);
@@ -89,7 +91,7 @@ public class TransferFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view= inflater.inflate(R.layout.fragment_transfer, container, false);
+        View view= inflater.inflate(R.layout.fragment_ble_transfer, container, false);
         setToolbar();
 
         tvState=view.findViewById(R.id.tv_state);
@@ -128,8 +130,8 @@ public class TransferFragment extends BaseFragment {
             @Override
             public void onClick(View view) {
                 updateConsole("",false);
-                BleClient.getInstance().addTransferTask(new BleTransfer(
-                        BleTransfer.TASK_TRANSFER_READ,
+                BleClient.getInstance().addTransferTask(new BleTask(
+                        BleTask.TASK_TRANSFER_READ,
                         null,
                         2000,
                         transferCallback
@@ -153,8 +155,8 @@ public class TransferFragment extends BaseFragment {
                     Toast.makeText(view.getContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
                     return;
                 }
-                BleClient.getInstance().addTransferTask(new BleTransfer(
-                        BleTransfer.TASK_TRANSFER_WRITE,
+                BleClient.getInstance().addTransferTask(new BleTask(
+                        BleTask.TASK_TRANSFER_WRITE,
                         inBytes,
                         2000,
                         transferCallback
@@ -244,7 +246,7 @@ public class TransferFragment extends BaseFragment {
     /**
      * 传输数据的回调
      */
-    private BleTransfer.BleTransferCallback transferCallback=new BleTransfer.BleTransferCallback() {
+    private BleTask.BleTransferCallback transferCallback=new BleTask.BleTransferCallback() {
         @Override
         public void onReply(byte[] bytes) {
             Log.i(TAG,"transfer:"+bytesToString(bytes));
@@ -252,7 +254,7 @@ public class TransferFragment extends BaseFragment {
         }
 
         @Override
-        public void onTimeout(BleTransfer task) {
+        public void onTimeout(BleTask task) {
             Log.i(TAG,"传输超时:"+task.transferType);
             updateConsole("transfer超时:"+task.transferType,true);
         }

@@ -20,6 +20,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -35,9 +39,9 @@ dependencies {
     //implementation 'com.github.KarasLuo:transfer_sdk:latest'
     implementation project(':app')
     //动态权限申请
-    api "com.github.tbruyelle:rxpermissions:0.10.2"
+    api 'com.github.tbruyelle:rxpermissions:0.12'
     //生命周期
-    implementation 'com.trello.rxlifecycle3:rxlifecycle:3.1.0'
-    implementation 'com.trello.rxlifecycle3:rxlifecycle-android:3.1.0'
-    implementation 'com.trello.rxlifecycle3:rxlifecycle-components:3.1.0'
+    implementation 'com.trello.rxlifecycle4:rxlifecycle:4.0.2'
+    implementation 'com.trello.rxlifecycle4:rxlifecycle-android:4.0.2'
+    implementation 'com.trello.rxlifecycle4:rxlifecycle-components:4.0.2'
 }

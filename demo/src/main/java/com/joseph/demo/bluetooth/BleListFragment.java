@@ -26,16 +26,14 @@ import com.joseph.transfer_sdk.ble.BleClient;
 import com.joseph.transfer_sdk.ble.BleSearchCallback;
 import com.joseph.transfer_sdk.exception.FeatureNotSupportException;
 import com.joseph.transfer_sdk.exception.PermissionNotSupportException;
-import com.joseph.transfer_sdk.usb.UsbClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.functions.Consumer;
 
 
 public class BleListFragment extends BaseFragment {

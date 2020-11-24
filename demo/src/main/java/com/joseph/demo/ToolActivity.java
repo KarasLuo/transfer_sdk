@@ -20,10 +20,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.tbruyelle.rxpermissions2.RxPermissions;
-import com.trello.rxlifecycle3.components.support.RxAppCompatActivity;
 
-import io.reactivex.functions.Consumer;
+import com.tbruyelle.rxpermissions3.RxPermissions;
+import com.trello.rxlifecycle4.components.support.RxAppCompatActivity;
+
+import io.reactivex.rxjava3.functions.Consumer;
 
 import static com.joseph.transfer_sdk.ble.BleClient.BLUETOOTH_REQUEST_CODE;
 

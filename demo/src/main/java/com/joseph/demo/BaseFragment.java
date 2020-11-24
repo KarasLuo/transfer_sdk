@@ -1,8 +1,8 @@
 package com.joseph.demo;
 
-import com.trello.rxlifecycle3.components.support.RxAppCompatDialogFragment;
+import com.trello.rxlifecycle4.components.support.RxFragment;
 
-public abstract class BaseFragment extends RxAppCompatDialogFragment {
+public abstract class BaseFragment extends RxFragment {
     private static final String TAG="BaseFragment";
 
     abstract protected void setToolbar();

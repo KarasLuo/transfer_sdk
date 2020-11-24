@@ -22,8 +22,6 @@ import com.joseph.transfer_sdk.usb.task.BulkTask;
 import com.joseph.transfer_sdk.usb.task.ControlTask;
 import com.joseph.transfer_sdk.usb.task.UsbTransferTask;
 
-import java.util.List;
-
 import static com.joseph.transfer_sdk.ByteUtils.byteToInt;
 import static com.joseph.transfer_sdk.ByteUtils.stringToBytes;
 

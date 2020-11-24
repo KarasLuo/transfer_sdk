@@ -21,9 +21,6 @@ import com.joseph.transfer_sdk.ble.BleGattNotifyCallback;
 import com.joseph.transfer_sdk.ble.BleTask;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import static com.joseph.transfer_sdk.ByteUtils.byteToInt;
 import static com.joseph.transfer_sdk.ByteUtils.bytesToString;
 import static com.joseph.transfer_sdk.ByteUtils.stringToBytes;
 
